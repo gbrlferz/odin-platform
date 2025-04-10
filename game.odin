@@ -6,10 +6,13 @@ player_pos := rl.Vector2{640, 320}
 player_vel: rl.Vector2
 player_grounded: bool
 player_scale: f32 = 4
-player_run_num_frames := 4
 player_run_texture: rl.Texture2D
 player_run_width: f32
 player_run_height: f32
+player_run_num_frames := 4
+player_run_frame_timer: f32
+player_run_current_frame: int
+player_run_frame_length: f32 = 0.1
 
 main :: proc() {
 	rl.InitWindow(1280, 720, "My First Game")
@@ -20,6 +23,16 @@ main :: proc() {
 
 	for !rl.WindowShouldClose() {
 		player_movement()
+
+		player_run_frame_timer += rl.GetFrameTime()
+
+		if player_run_frame_timer > player_run_frame_length {
+			player_run_current_frame += 1
+			player_run_frame_timer = 0
+			if player_run_current_frame == player_run_num_frames {
+				player_run_current_frame = 0
+			}
+		}
 
 		rl.BeginDrawing()
 
@@ -64,7 +77,7 @@ player_movement :: proc() {
 player_animation :: proc() {
 	// Define player sprite source
 	draw_player_source := rl.Rectangle {
-		x      = 0,
+		x      = f32(player_run_current_frame) * player_run_width / f32(player_run_num_frames),
 		y      = 0,
 		width  = player_run_width / f32(player_run_num_frames),
 		height = player_run_height,
