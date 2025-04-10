@@ -5,6 +5,7 @@ import rl "vendor:raylib"
 player_pos := rl.Vector2{640, 320}
 player_vel: rl.Vector2
 player_grounded: bool
+player_flipped := false
 player_scale: f32 = 4
 player_run_texture: rl.Texture2D
 player_run_width: f32
@@ -49,8 +50,10 @@ main :: proc() {
 player_movement :: proc() {
 	if rl.IsKeyDown(.LEFT) {
 		player_vel.x = -400
+		player_flipped = true
 	} else if rl.IsKeyDown(.RIGHT) {
 		player_vel.x = 400
+		player_flipped = false
 	} else {player_vel.x = 0}
 
 	// Gravity
@@ -81,6 +84,10 @@ player_animation :: proc() {
 		y      = 0,
 		width  = player_run_width / f32(player_run_num_frames),
 		height = player_run_height,
+	}
+
+	if player_flipped {
+		draw_player_source.width = -draw_player_source.width
 	}
 
 	// Define player position
