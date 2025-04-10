@@ -25,16 +25,6 @@ main :: proc() {
 	for !rl.WindowShouldClose() {
 		player_movement()
 
-		player_run_frame_timer += rl.GetFrameTime()
-
-		if player_run_frame_timer > player_run_frame_length {
-			player_run_current_frame += 1
-			player_run_frame_timer = 0
-			if player_run_current_frame == player_run_num_frames {
-				player_run_current_frame = 0
-			}
-		}
-
 		rl.BeginDrawing()
 
 		player_animation()
@@ -78,6 +68,16 @@ player_movement :: proc() {
 }
 
 player_animation :: proc() {
+	player_run_frame_timer += rl.GetFrameTime()
+
+	for player_run_frame_timer > player_run_frame_length {
+		player_run_current_frame += 1
+		player_run_frame_timer -= player_run_frame_length
+		if player_run_current_frame == player_run_num_frames {
+			player_run_current_frame = 0
+		}
+	}
+
 	// Define player sprite source
 	draw_player_source := rl.Rectangle {
 		x      = f32(player_run_current_frame) * player_run_width / f32(player_run_num_frames),
