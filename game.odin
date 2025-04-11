@@ -7,20 +7,30 @@ player_vel: rl.Vector2
 player_grounded: bool
 player_flipped := false
 player_scale: f32 = 4
-player_run_texture: rl.Texture2D
+player_run: Animation
+
 player_run_width: f32
 player_run_height: f32
-player_run_num_frames := 4
-player_run_frame_timer: f32
-player_run_current_frame: int
-player_run_frame_length: f32 = 0.1
+
+Animation :: struct {
+	texture:       rl.Texture2D,
+	num_frames:    i32,
+	frame_timer:   f32,
+	current_frame: i32,
+	frame_length:  f32,
+}
 
 main :: proc() {
 	rl.InitWindow(1280, 720, "My First Game")
 
-	player_run_texture = rl.LoadTexture("cat_run.png")
-	player_run_width = f32(player_run_texture.width)
-	player_run_height = f32(player_run_texture.height)
+	player_run = {
+		texture      = rl.LoadTexture("cat_run.png"),
+		num_frames   = 4,
+		frame_length = 0.1,
+	}
+
+	player_run_width = f32(player_run.texture.width)
+	player_run_height = f32(player_run.texture.height)
 
 	for !rl.WindowShouldClose() {
 		player_movement()
@@ -60,29 +70,29 @@ player_movement :: proc() {
 
 	// Clamp position
 	if player_pos.y >
-	   f32(rl.GetScreenHeight()) - f32(player_run_texture.height * i32(player_scale)) {
+	   f32(rl.GetScreenHeight()) - f32(player_run.texture.height * i32(player_scale)) {
 		player_pos.y =
-			f32(rl.GetScreenHeight()) - f32(player_run_texture.height * i32(player_scale))
+			f32(rl.GetScreenHeight()) - f32(player_run.texture.height * i32(player_scale))
 		player_grounded = true
 	}
 }
 
 player_animation :: proc() {
-	player_run_frame_timer += rl.GetFrameTime()
+	player_run.frame_timer += rl.GetFrameTime()
 
-	for player_run_frame_timer > player_run_frame_length {
-		player_run_current_frame += 1
-		player_run_frame_timer -= player_run_frame_length
-		if player_run_current_frame == player_run_num_frames {
-			player_run_current_frame = 0
+	for player_run.frame_timer > player_run.frame_length {
+		player_run.current_frame += 1
+		player_run.frame_timer -= player_run.frame_length
+		if player_run.current_frame == player_run.num_frames {
+			player_run.current_frame = 0
 		}
 	}
 
 	// Define player sprite source
 	draw_player_source := rl.Rectangle {
-		x      = f32(player_run_current_frame) * player_run_width / f32(player_run_num_frames),
+		x      = f32(player_run.current_frame) * player_run_width / f32(player_run.num_frames),
 		y      = 0,
-		width  = player_run_width / f32(player_run_num_frames),
+		width  = player_run_width / f32(player_run.num_frames),
 		height = player_run_height,
 	}
 
@@ -94,10 +104,10 @@ player_animation :: proc() {
 	draw_player_dest := rl.Rectangle {
 		x      = player_pos.x,
 		y      = player_pos.y,
-		width  = player_run_width * player_scale / f32(player_run_num_frames),
+		width  = player_run_width * player_scale / f32(player_run.num_frames),
 		height = player_run_height * player_scale,
 	}
 
 	// Draw player
-	rl.DrawTexturePro(player_run_texture, draw_player_source, draw_player_dest, 0, 0, rl.WHITE)
+	rl.DrawTexturePro(player_run.texture, draw_player_source, draw_player_dest, 0, 0, rl.WHITE)
 }
