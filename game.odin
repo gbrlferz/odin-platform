@@ -12,9 +12,6 @@ current_anim: Animation
 player_run: Animation
 player_idle: Animation
 
-player_run_width: f32
-player_run_height: f32
-
 Animation :: struct {
 	texture:       rl.Texture2D,
 	num_frames:    i32,
@@ -28,6 +25,47 @@ Animation_Name :: enum {
 	Idle,
 	Run,
 }
+
+update_animation :: proc(a: ^Animation) {
+	a.frame_timer += rl.GetFrameTime()
+
+	for a.frame_timer > a.frame_length {
+		a.current_frame += 1
+		a.frame_timer -= a.frame_length
+		if a.current_frame == a.num_frames {
+			a.current_frame = 0
+		}
+	}
+}
+
+draw_animation :: proc(a: Animation, pos: rl.Vector2, flip: bool) {
+	width := f32(a.texture.width)
+	height := f32(a.texture.height)
+
+	// Define player sprite source
+	source := rl.Rectangle {
+		x      = f32(a.current_frame) * width / f32(a.num_frames),
+		y      = 0,
+		width  = width / f32(a.num_frames),
+		height = height,
+	}
+
+	if flip {
+		source.width = -source.width
+	}
+
+	// Define player position
+	dest := rl.Rectangle {
+		x      = pos.x,
+		y      = pos.y,
+		width  = width * player_scale / f32(a.num_frames),
+		height = height * player_scale,
+	}
+
+	// Draw player
+	rl.DrawTexturePro(a.texture, source, dest, 0, 0, rl.WHITE)
+}
+
 
 main :: proc() {
 	rl.InitWindow(1280, 720, "My First Game")
@@ -48,15 +86,14 @@ main :: proc() {
 
 	current_anim = player_idle
 
-
 	for !rl.WindowShouldClose() {
 		player_movement()
 
 		rl.BeginDrawing()
 
-		player_animation()
-
-		rl.ClearBackground(rl.BLUE)
+		rl.ClearBackground(rl.SKYBLUE)
+		update_animation(&current_anim)
+		draw_animation(current_anim, player_pos, player_flipped)
 
 		rl.EndDrawing()
 	}
@@ -106,42 +143,4 @@ player_movement :: proc() {
 			f32(rl.GetScreenHeight()) - f32(player_run.texture.height * i32(player_scale))
 		player_grounded = true
 	}
-}
-
-player_animation :: proc() {
-	player_run_width = f32(current_anim.texture.width)
-	player_run_height = f32(current_anim.texture.height)
-
-	current_anim.frame_timer += rl.GetFrameTime()
-
-	for current_anim.frame_timer > current_anim.frame_length {
-		current_anim.current_frame += 1
-		current_anim.frame_timer -= current_anim.frame_length
-		if current_anim.current_frame == current_anim.num_frames {
-			current_anim.current_frame = 0
-		}
-	}
-
-	// Define player sprite source
-	draw_player_source := rl.Rectangle {
-		x      = f32(current_anim.current_frame) * player_run_width / f32(current_anim.num_frames),
-		y      = 0,
-		width  = player_run_width / f32(current_anim.num_frames),
-		height = player_run_height,
-	}
-
-	if player_flipped {
-		draw_player_source.width = -draw_player_source.width
-	}
-
-	// Define player position
-	draw_player_dest := rl.Rectangle {
-		x      = player_pos.x,
-		y      = player_pos.y,
-		width  = player_run_width * player_scale / f32(current_anim.num_frames),
-		height = player_run_height * player_scale,
-	}
-
-	// Draw player
-	rl.DrawTexturePro(current_anim.texture, draw_player_source, draw_player_dest, 0, 0, rl.WHITE)
 }
