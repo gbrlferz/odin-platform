@@ -148,12 +148,4 @@ player_movement :: proc() {
 
 	// Apply velocity
 	player_pos += player_vel * rl.GetFrameTime()
-
-	// Clamp position
-	if player_pos.y >
-	   f32(rl.GetScreenHeight()) - f32(player_run.texture.height * i32(player_scale)) {
-		player_pos.y =
-			f32(rl.GetScreenHeight()) - f32(player_run.texture.height * i32(player_scale))
-		player_grounded = true
-	}
 }
