@@ -7,7 +7,10 @@ player_vel: rl.Vector2
 player_grounded: bool
 player_flipped := false
 player_scale: f32 = 4
+
+current_anim: Animation
 player_run: Animation
+player_idle: Animation
 
 player_run_width: f32
 player_run_height: f32
@@ -18,6 +21,12 @@ Animation :: struct {
 	frame_timer:   f32,
 	current_frame: i32,
 	frame_length:  f32,
+	name:          Animation_Name,
+}
+
+Animation_Name :: enum {
+	Idle,
+	Run,
 }
 
 main :: proc() {
@@ -27,10 +36,18 @@ main :: proc() {
 		texture      = rl.LoadTexture("cat_run.png"),
 		num_frames   = 4,
 		frame_length = 0.1,
+		name         = .Run,
 	}
 
-	player_run_width = f32(player_run.texture.width)
-	player_run_height = f32(player_run.texture.height)
+	player_idle = {
+		texture      = rl.LoadTexture("cat_idle.png"),
+		num_frames   = 2,
+		frame_length = 0.5,
+		name         = .Idle,
+	}
+
+	current_anim = player_idle
+
 
 	for !rl.WindowShouldClose() {
 		player_movement()
@@ -51,10 +68,24 @@ player_movement :: proc() {
 	if rl.IsKeyDown(.LEFT) {
 		player_vel.x = -400
 		player_flipped = true
+
+		if current_anim.name != .Run {
+			current_anim = player_run
+		}
 	} else if rl.IsKeyDown(.RIGHT) {
 		player_vel.x = 400
 		player_flipped = false
-	} else {player_vel.x = 0}
+
+		if current_anim.name != .Run {
+			current_anim = player_run
+		}
+	} else {
+		player_vel.x = 0
+
+		if current_anim.name != .Idle {
+			current_anim = player_idle
+		}
+	}
 
 	// Gravity
 	player_vel.y += 2000 * rl.GetFrameTime()
@@ -78,21 +109,24 @@ player_movement :: proc() {
 }
 
 player_animation :: proc() {
-	player_run.frame_timer += rl.GetFrameTime()
+	player_run_width = f32(current_anim.texture.width)
+	player_run_height = f32(current_anim.texture.height)
 
-	for player_run.frame_timer > player_run.frame_length {
-		player_run.current_frame += 1
-		player_run.frame_timer -= player_run.frame_length
-		if player_run.current_frame == player_run.num_frames {
-			player_run.current_frame = 0
+	current_anim.frame_timer += rl.GetFrameTime()
+
+	for current_anim.frame_timer > current_anim.frame_length {
+		current_anim.current_frame += 1
+		current_anim.frame_timer -= current_anim.frame_length
+		if current_anim.current_frame == current_anim.num_frames {
+			current_anim.current_frame = 0
 		}
 	}
 
 	// Define player sprite source
 	draw_player_source := rl.Rectangle {
-		x      = f32(player_run.current_frame) * player_run_width / f32(player_run.num_frames),
+		x      = f32(current_anim.current_frame) * player_run_width / f32(current_anim.num_frames),
 		y      = 0,
-		width  = player_run_width / f32(player_run.num_frames),
+		width  = player_run_width / f32(current_anim.num_frames),
 		height = player_run_height,
 	}
 
@@ -104,10 +138,10 @@ player_animation :: proc() {
 	draw_player_dest := rl.Rectangle {
 		x      = player_pos.x,
 		y      = player_pos.y,
-		width  = player_run_width * player_scale / f32(player_run.num_frames),
+		width  = player_run_width * player_scale / f32(current_anim.num_frames),
 		height = player_run_height * player_scale,
 	}
 
 	// Draw player
-	rl.DrawTexturePro(player_run.texture, draw_player_source, draw_player_dest, 0, 0, rl.WHITE)
+	rl.DrawTexturePro(current_anim.texture, draw_player_source, draw_player_dest, 0, 0, rl.WHITE)
 }
