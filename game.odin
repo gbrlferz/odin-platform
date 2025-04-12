@@ -58,17 +58,19 @@ draw_animation :: proc(a: Animation, pos: rl.Vector2, flip: bool) {
 	dest := rl.Rectangle {
 		x      = pos.x,
 		y      = pos.y,
-		width  = width * player_scale / f32(a.num_frames),
-		height = height * player_scale,
+		width  = width / f32(a.num_frames),
+		height = height,
 	}
 
 	// Draw player
-	rl.DrawTexturePro(a.texture, source, dest, 0, 0, rl.WHITE)
+	rl.DrawTexturePro(a.texture, source, dest, {dest.width / 2, dest.height / 2}, 0, rl.WHITE)
 }
 
+PixelWindowHeight :: 180
 
 main :: proc() {
 	rl.InitWindow(1280, 720, "My First Game")
+	rl.SetWindowState({.WINDOW_RESIZABLE})
 
 	player_run = {
 		texture      = rl.LoadTexture("cat_run.png"),
@@ -93,8 +95,18 @@ main :: proc() {
 
 		rl.ClearBackground(rl.SKYBLUE)
 		update_animation(&current_anim)
-		draw_animation(current_anim, player_pos, player_flipped)
 
+		screen_height := f32(rl.GetScreenHeight())
+
+		camera := rl.Camera2D {
+			zoom   = screen_height / PixelWindowHeight,
+			offset = {f32(rl.GetScreenWidth() / 2), screen_height / 2},
+			target = player_pos,
+		}
+
+		rl.BeginMode2D(camera)
+		draw_animation(current_anim, player_pos, player_flipped)
+		rl.EndMode2D()
 		rl.EndDrawing()
 	}
 
