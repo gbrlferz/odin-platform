@@ -3,6 +3,7 @@ package game
 import rl "vendor:raylib"
 
 player_pos := rl.Vector2{640, 320}
+player_pos := rl.Vector2{0, 0}
 player_vel: rl.Vector2
 player_grounded: bool
 player_flipped := false
@@ -63,7 +64,7 @@ draw_animation :: proc(a: Animation, pos: rl.Vector2, flip: bool) {
 	}
 
 	// Draw player
-	rl.DrawTexturePro(a.texture, source, dest, {dest.width / 2, dest.height / 2}, 0, rl.WHITE)
+	rl.DrawTexturePro(a.texture, source, dest, {dest.width / 2, dest.height}, 0, rl.WHITE)
 }
 
 PixelWindowHeight :: 180
