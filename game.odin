@@ -107,6 +107,8 @@ main :: proc() {
 
 	current_anim = player_idle
 
+	editing := false
+
 	for !rl.WindowShouldClose() {
 		player_movement()
 
@@ -129,6 +131,29 @@ main :: proc() {
 			rl.DrawTextureV(platform_texture, platform, rl.WHITE)
 		}
 		// rl.DrawRectangleRec(player_feet_collider, {0, 255, 0, 100})
+
+		if rl.IsKeyPressed(.F2) {
+			editing = !editing
+		}
+
+		if editing {
+			mp := rl.GetScreenToWorld2D(rl.GetMousePosition(), camera)
+
+			rl.DrawTextureV(platform_texture, mp, rl.WHITE)
+
+			if rl.IsMouseButtonPressed(.LEFT) {
+				append(&level.platforms, mp)
+			}
+
+			if rl.IsMouseButtonPressed(.RIGHT) {
+				for p, idx in level.platforms {
+					if rl.CheckCollisionPointRec(mp, platform_collider(p)) {
+						unordered_remove(&level.platforms, idx)
+					}
+				}
+			}
+		}
+
 		rl.EndMode2D()
 		rl.EndDrawing()
 	}
