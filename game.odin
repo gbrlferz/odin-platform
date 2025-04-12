@@ -71,6 +71,7 @@ PixelWindowHeight :: 180
 main :: proc() {
 	rl.InitWindow(1280, 720, "My First Game")
 	rl.SetWindowState({.WINDOW_RESIZABLE})
+	rl.SetTargetFPS(60)
 
 	player_run = {
 		texture      = rl.LoadTexture("cat_run.png"),
