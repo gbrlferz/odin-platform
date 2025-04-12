@@ -1,3 +1,4 @@
+#+feature dynamic-literals
 package game
 
 import rl "vendor:raylib"
@@ -9,7 +10,9 @@ player_flipped := false
 player_scale: f32 = 4
 player_feet_collider: rl.Rectangle
 
-platforms := []rl.Rectangle{{-20, 20, 96, 16}, {20, -40, 96, 16}, {90, -10, 96, 16}}
+level := Level {
+	platforms = {{-20, 20}, {90, -10}, {90, -50}},
+}
 
 platform_texture: rl.Texture2D
 
@@ -73,6 +76,14 @@ draw_animation :: proc(a: Animation, pos: rl.Vector2, flip: bool) {
 
 PixelWindowHeight :: 180
 
+Level :: struct {
+	platforms: [dynamic]rl.Vector2,
+}
+
+platform_collider :: proc(pos: rl.Vector2) -> rl.Rectangle {
+	return {pos.x, pos.y, 96, 16}
+}
+
 main :: proc() {
 	rl.InitWindow(1280, 720, "My First Game")
 	rl.SetWindowState({.WINDOW_RESIZABLE})
@@ -114,8 +125,8 @@ main :: proc() {
 
 		rl.BeginMode2D(camera)
 		draw_animation(current_anim, player_pos, player_flipped)
-		for platform in platforms {
-			rl.DrawTextureV(platform_texture, {platform.x, platform.y}, rl.WHITE)
+		for platform in level.platforms {
+			rl.DrawTextureV(platform_texture, platform, rl.WHITE)
 		}
 		// rl.DrawRectangleRec(player_feet_collider, {0, 255, 0, 100})
 		rl.EndMode2D()
@@ -163,8 +174,9 @@ player_movement :: proc() {
 
 	player_grounded = false
 
-	for platform in platforms {
-		if rl.CheckCollisionRecs(player_feet_collider, platform) && player_vel.y > 0 {
+	for platform in level.platforms {
+		if rl.CheckCollisionRecs(player_feet_collider, platform_collider(platform)) &&
+		   player_vel.y > 0 {
 			player_vel.y = 0
 			player_pos.y = platform.y
 			player_grounded = true
