@@ -2,12 +2,16 @@ package game
 
 import rl "vendor:raylib"
 
-player_pos := rl.Vector2{640, 320}
 player_pos := rl.Vector2{0, 0}
 player_vel: rl.Vector2
 player_grounded: bool
 player_flipped := false
 player_scale: f32 = 4
+player_feet_collider: rl.Rectangle
+
+platforms := []rl.Rectangle{{-20, 20, 96, 16}, {20, -40, 96, 16}, {90, -10, 96, 16}}
+
+platform_texture: rl.Texture2D
 
 current_anim: Animation
 player_run: Animation
@@ -88,6 +92,8 @@ main :: proc() {
 		name         = .Idle,
 	}
 
+	platform_texture = rl.LoadTexture("platform.png")
+
 	current_anim = player_idle
 
 	for !rl.WindowShouldClose() {
@@ -108,6 +114,10 @@ main :: proc() {
 
 		rl.BeginMode2D(camera)
 		draw_animation(current_anim, player_pos, player_flipped)
+		for platform in platforms {
+			rl.DrawTextureV(platform_texture, {platform.x, platform.y}, rl.WHITE)
+		}
+		// rl.DrawRectangleRec(player_feet_collider, {0, 255, 0, 100})
 		rl.EndMode2D()
 		rl.EndDrawing()
 	}
@@ -117,14 +127,14 @@ main :: proc() {
 
 player_movement :: proc() {
 	if rl.IsKeyDown(.LEFT) {
-		player_vel.x = -400
+		player_vel.x = -150
 		player_flipped = true
 
 		if current_anim.name != .Run {
 			current_anim = player_run
 		}
 	} else if rl.IsKeyDown(.RIGHT) {
-		player_vel.x = 400
+		player_vel.x = 150
 		player_flipped = false
 
 		if current_anim.name != .Run {
@@ -139,14 +149,25 @@ player_movement :: proc() {
 	}
 
 	// Gravity
-	player_vel.y += 2000 * rl.GetFrameTime()
+	player_vel.y += 1000 * rl.GetFrameTime()
 
 	// Allow jumping
 	if player_grounded && rl.IsKeyPressed(.SPACE) {
-		player_vel.y = -600
-		player_grounded = false
+		player_vel.y = -220
 	}
 
 	// Apply velocity
 	player_pos += player_vel * rl.GetFrameTime()
+
+	player_feet_collider = rl.Rectangle{player_pos.x - 4, player_pos.y - 4, 8, 4}
+
+	player_grounded = false
+
+	for platform in platforms {
+		if rl.CheckCollisionRecs(player_feet_collider, platform) && player_vel.y > 0 {
+			player_vel.y = 0
+			player_pos.y = platform.y
+			player_grounded = true
+		}
+	}
 }
