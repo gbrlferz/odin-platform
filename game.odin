@@ -86,6 +86,54 @@ platform_collider :: proc(pos: rl.Vector2) -> rl.Rectangle {
 	return {pos.x, pos.y, 96, 16}
 }
 
+player_movement :: proc() {
+	if rl.IsKeyDown(.LEFT) {
+		player_vel.x = -150
+		player_flipped = true
+
+		if current_anim.name != .Run {
+			current_anim = player_run
+		}
+	} else if rl.IsKeyDown(.RIGHT) {
+		player_vel.x = 150
+		player_flipped = false
+
+		if current_anim.name != .Run {
+			current_anim = player_run
+		}
+	} else {
+		player_vel.x = 0
+
+		if current_anim.name != .Idle {
+			current_anim = player_idle
+		}
+	}
+
+	// Gravity
+	player_vel.y += 1000 * rl.GetFrameTime()
+
+	// Allow jumping
+	if player_grounded && rl.IsKeyPressed(.SPACE) {
+		player_vel.y = -220
+	}
+
+	// Apply velocity
+	player_pos += player_vel * rl.GetFrameTime()
+
+	player_feet_collider = rl.Rectangle{player_pos.x - 4, player_pos.y - 4, 8, 4}
+
+	player_grounded = false
+
+	for platform in level.platforms {
+		if rl.CheckCollisionRecs(player_feet_collider, platform_collider(platform)) &&
+		   player_vel.y > 0 {
+			player_vel.y = 0
+			player_pos.y = platform.y
+			player_grounded = true
+		}
+	}
+}
+
 main :: proc() {
 	track: mem.Tracking_Allocator
 	mem.tracking_allocator_init(&track, context.allocator)
@@ -175,52 +223,9 @@ main :: proc() {
 	}
 
 	rl.CloseWindow()
-}
 
-player_movement :: proc() {
-	if rl.IsKeyDown(.LEFT) {
-		player_vel.x = -150
-		player_flipped = true
-
-		if current_anim.name != .Run {
-			current_anim = player_run
-		}
-	} else if rl.IsKeyDown(.RIGHT) {
-		player_vel.x = 150
-		player_flipped = false
-
-		if current_anim.name != .Run {
-			current_anim = player_run
-		}
-	} else {
-		player_vel.x = 0
-
-		if current_anim.name != .Idle {
-			current_anim = player_idle
-		}
+	if level_data, err := json.marshal(level, allocator = context.temp_allocator); err == nil {
 	}
 
-	// Gravity
-	player_vel.y += 1000 * rl.GetFrameTime()
-
-	// Allow jumping
-	if player_grounded && rl.IsKeyPressed(.SPACE) {
-		player_vel.y = -220
-	}
-
-	// Apply velocity
-	player_pos += player_vel * rl.GetFrameTime()
-
-	player_feet_collider = rl.Rectangle{player_pos.x - 4, player_pos.y - 4, 8, 4}
-
-	player_grounded = false
-
-	for platform in level.platforms {
-		if rl.CheckCollisionRecs(player_feet_collider, platform_collider(platform)) &&
-		   player_vel.y > 0 {
-			player_vel.y = 0
-			player_pos.y = platform.y
-			player_grounded = true
-		}
-	}
+	delete(level.platforms)
 }
