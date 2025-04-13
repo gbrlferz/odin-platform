@@ -1,6 +1,8 @@
 #+feature dynamic-literals
 package game
 
+import fmt "core:fmt"
+import "core:mem"
 import rl "vendor:raylib"
 
 player_pos := rl.Vector2{0, 0}
