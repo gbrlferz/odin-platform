@@ -1,8 +1,10 @@
 #+feature dynamic-literals
 package game
 
+import "core:encoding/json"
 import fmt "core:fmt"
 import "core:mem"
+import "core:os"
 import rl "vendor:raylib"
 
 player_pos := rl.Vector2{0, 0}
@@ -12,15 +14,13 @@ player_flipped := false
 player_scale: f32 = 4
 player_feet_collider: rl.Rectangle
 
-level := Level {
-	platforms = {{-20, 20}, {90, -10}, {90, -50}},
-}
-
 platform_texture: rl.Texture2D
 
 current_anim: Animation
 player_run: Animation
 player_idle: Animation
+
+level: Level
 
 Animation :: struct {
 	texture:       rl.Texture2D,
@@ -167,6 +167,14 @@ main :: proc() {
 		name         = .Idle,
 	}
 
+	if level_data, ok := os.read_entire_file("level.json", context.temp_allocator); ok {
+		if json.unmarshal(level_data, &level) != nil {
+			append(&level.platforms, rl.Vector2{-20, 20})
+		}
+	} else {
+		append(&level.platforms, rl.Vector2{-20, 20})
+	}
+
 	platform_texture = rl.LoadTexture("platform.png")
 
 	current_anim = player_idle
@@ -225,7 +233,9 @@ main :: proc() {
 	rl.CloseWindow()
 
 	if level_data, err := json.marshal(level, allocator = context.temp_allocator); err == nil {
+		os.write_entire_file("level.json", level_data)
 	}
 
+	free_all(context.temp_allocator)
 	delete(level.platforms)
 }
